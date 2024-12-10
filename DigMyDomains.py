@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from tqdm import tqdm
 import time
 
+# Function to fetch and extract links from a single webpage
 def extract_links_from_url(url):
     try:
         start_time = time.time()
@@ -10,9 +11,8 @@ def extract_links_from_url(url):
         elapsed_time = time.time() - start_time
         
         if elapsed_time > 60:
-            permission = input(f"URL {url} took too long ({elapsed_time:.2f}s). Press any key to skip or wait...")
-            if permission:
-                return set()
+            print(f"URL {url} took too long ({elapsed_time:.2f}s). Skipping...")
+            return set()
         
         if response.status_code == 200:
             soup = BeautifulSoup(response.content, 'html.parser')
@@ -24,8 +24,10 @@ def extract_links_from_url(url):
                     links.add(link)
             return links
         else:
+            print(f"Failed to fetch {url} with status code {response.status_code}.")
             return set()
     except (requests.exceptions.RequestException, requests.exceptions.Timeout):
+        print(f"Error occurred while processing {url}.")
         return set()
 
 # Function to process the input file and extract links from all URLs
@@ -37,6 +39,7 @@ def process_file(input_file, output_file):
     all_links = set()
     skipped_sites = 0
 
+    # Read existing links to avoid duplicates in the output file
     try:
         with open(output_file, 'r', encoding='utf-8') as outfile:  # Specify UTF-8 encoding
             written_links = set(line.strip() for line in outfile.readlines())
@@ -64,10 +67,10 @@ def process_file(input_file, output_file):
                     progress_bar.set_description(f"Processing {idx}/{total_sites}")
                 progress_bar.update(1)
 
-   
+    # Deduplicate all collected links at the end
     unique_links = sorted(all_links)
 
-    
+    # Write unique links to the new file
     with open('output_unique.txt', 'w', encoding='utf-8') as unique_outfile:
         for link in unique_links:
             unique_outfile.write(link + '\n')
@@ -78,4 +81,3 @@ def process_file(input_file, output_file):
 input_file = 'sites.txt'  # Input file containing URLs (one per line)
 output_file = 'output.txt'  # Output file to save the extracted links
 process_file(input_file, output_file)
-# --itsmeRiF
